@@ -91,15 +91,15 @@ canvas {
 
 .two-charts-container {
   display: flex;
-  flex-wrap: wrap; /* Allows charts to wrap to the next line on smaller screens */
-  justify-content: space-around; /* Distributes space around items */
-  gap: 20px; /* Space between the chart wrappers */
+  flex-wrap: wrap; 
+  justify-content: space-around; 
+  gap: 20px; 
 }
 
 .chart-wrapper {
-  flex: 1; /* Allows each chart wrapper to grow and shrink */
-  min-width: 280px; /* Minimum width before wrapping to ensure readability */
-  text-align: center; /* Centers the h4 and canvas within its wrapper */
+  flex: 1; 
+  min-width: 280px; 
+  text-align: center;
 }
 
 .chart-wrapper h4 {
@@ -107,9 +107,7 @@ canvas {
   color: #0f172a;
 }
 
-/* Ensure canvas still adheres to its max-height within the new wrappers */
 .chart-wrapper canvas {
   width: 100% !important;
-  max-height: 250px; /* Slightly reduce max-height if needed to fit two charts better */
-  /* Remove !important if you want other styles to override this, but it's fine here */
+  max-height: 250px; 
 }

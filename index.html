@@ -121,19 +121,19 @@
       }
     });
 
-    // Polar Area Chart: Money In (Original config)
+   
     new Chart(document.getElementById('moneyInChart'), {
       type: 'polarArea',
       data: {
         labels: ['Deposit', 'Individual', 'Business', 'Mshwari'],
         datasets: [{
           label: 'Ksh In',
-          data: [30000, 15000, 8000, 5000], // Example data
+          data: [30000, 15000, 8000, 5000], 
           backgroundColor: [
-            'rgba(75, 192, 192, 0.7)', // Deposit
-            'rgba(153, 102, 255, 0.7)', // Individual
-            'rgba(255, 159, 64, 0.7)', // Business
-            'rgba(201, 203, 207, 0.7)'  // Mshwari
+            'rgba(75, 192, 192, 0.7)', 
+            'rgba(153, 102, 255, 0.7)', 
+            'rgba(255, 159, 64, 0.7)',
+            'rgba(201, 203, 207, 0.7)'  
           ],
           borderColor: [
             'rgba(75, 192, 192, 1)',
@@ -151,7 +151,7 @@
             position: 'top',
           },
           title: {
-            display: false, // Title handled by h4 tag
+            display: false, 
           }
         },
         scales: {
@@ -168,14 +168,14 @@
       }
     });
 
-    // Polar Area Chart: Money Out (Original config)
+
     new Chart(document.getElementById('moneyOutChart'), {
       type: 'polarArea',
       data: {
         labels: ['Sent', 'Buy goods', 'Paybill', 'Pochi', 'Fuliza', 'Withdrawal'],
         datasets: [{
           label: 'Ksh Out',
-          data: [10000, 7500, 12000, 2000, 3000, 5000], // Example data
+          data: [10000, 7500, 12000, 2000, 3000, 5000], 
           backgroundColor: [
             'rgba(255, 99, 132, 0.7)',
             'rgba(54, 162, 235, 0.7)',
@@ -202,7 +202,7 @@
             position: 'top',
           },
           title: {
-            display: false, // Title handled by h4 tag
+            display: false, 
           }
         },
         scales: {
