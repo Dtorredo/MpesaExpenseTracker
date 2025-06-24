@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Expense Analyzer</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://kit.fontawesome.com/d08ab046b6.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <header class="top-bar" id="clock">
+    Loading time...
+  </header>
+
+  <main class="main">
+    <section class="chart">
+      <h3>Monthly Spending</h3>
+      <canvas id="monthlyChart"></canvas>
+    </section>
+
+    <section class="chart">
+      <h3>Top Categories</h3>
+      <canvas id="categoryChart"></canvas>
+    </section>
+
+    <section class="chart">
+      <h3>Daily Trend</h3>
+      <canvas id="trendChart"></canvas>
+    </section>
+  </main>
+<footer class="bottom-nav">
+  <a href="index.html" class="nav-icon">
+    <i class="fas fa-home"></i><br/>
+    <small>Home</small>
+  </a>
+  <a href="upload.html" class="nav-icon">
+    <i class="fa-solid fa-cloud-arrow-up"></i><br/>
+    <small>Upload</small>
+  </a>
+</footer>
+
+  <script>
+    // Live Clock
+    function updateClock() {
+      const now = new Date();
+      const options = { weekday: 'short', month: 'short', day: 'numeric' };
+      const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const date = now.toLocaleDateString(undefined, options);
+      document.getElementById("clock").textContent = `${time} • ${date}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Chart.js Charts
+    new Chart(document.getElementById('monthlyChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{
+          label: 'Ksh Spent',
+          data: [5000, 7200, 6600, 4800, 8200, 7600],
+          backgroundColor: '#38bdf8'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    new Chart(document.getElementById('categoryChart'), {
+      type: 'pie',
+      data: {
+        labels: ['Food', 'Transport', 'Bills', 'Shopping', 'Health'],
+        datasets: [{
+          data: [25, 15, 30, 20, 10],
+          backgroundColor: ['#f87171', '#60a5fa', '#fbbf24', '#34d399', '#a78bfa']
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+
+    new Chart(document.getElementById('trendChart'), {
+      type: 'line',
+      data: {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        datasets: [{
+          label: 'Spending (Ksh)',
+          data: [1200, 900, 1500, 800, 1300, 700, 1100],
+          borderColor: '#4f46e5',
+          backgroundColor: 'rgba(79, 70, 229, 0.2)',
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Upload File</title>
+  <link rel="stylesheet" href="upload.css" />
+  <script src="https://kit.fontawesome.com/d08ab046b6.js" crossorigin="anonymous"></script>
+
+</head>
+<body>
+  <main class="page-content">
+    <div class="upload-container">
+      <h2>Upload Files</h2>
+      <div class="upload-box">
+        <p class="upload-label">Select File here</p>
+        <p class="upload-support">Files Supported: PDF, CSV, EXCEL </p>
+        <label for="fileInput" class="upload-btn">Choose File</label>
+        <input type="file" id="fileInput" hidden />
+      </div>
+    </div>
+  </main>
+
+  <footer class="bottom-nav">
+    <a href="index.html" class="nav-icon">
+      <i class="fas fa-home"></i><br/>
+      <small>Home</small>
+    </a>
+    <a href="upload.html" class="nav-icon">
+      <i class="fa-solid fa-cloud-arrow-up"></i><br/>
+      <small>Upload</small>
+    </a>
+  </footer>
+
+  <script src="upload.js"></script>
+</body>
+</html>
