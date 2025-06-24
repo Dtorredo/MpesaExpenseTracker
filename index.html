@@ -29,20 +29,35 @@
       <h3>Daily Trend</h3>
       <canvas id="trendChart"></canvas>
     </section>
+
+    <section class="chart">
+      <h3>Money Flow Overview</h3> <div class="two-charts-container">
+        <div class="chart-wrapper">
+          <h4>Money In Categories</h4>
+          <canvas id="moneyInChart"></canvas>
+        </div>
+        <div class="chart-wrapper">
+          <h4>Money Out Categories</h4>
+          <canvas id="moneyOutChart"></canvas>
+        </div>
+      </div>
+    </section>
+
   </main>
-<footer class="bottom-nav">
-  <a href="index.html" class="nav-icon">
-    <i class="fas fa-home"></i><br/>
-    <small>Home</small>
-  </a>
-  <a href="upload.html" class="nav-icon">
-    <i class="fa-solid fa-cloud-arrow-up"></i><br/>
-    <small>Upload</small>
-  </a>
-</footer>
+
+  <footer class="bottom-nav">
+    <a href="index.html" class="nav-icon">
+      <i class="fas fa-home"></i><br/>
+      <small>Home</small>
+    </a>
+    <a href="upload.html" class="nav-icon">
+      <i class="fa-solid fa-cloud-arrow-up"></i><br/>
+      <small>Upload</small>
+    </a>
+  </footer>
 
   <script>
-    // Live Clock
+    // Live Clock (No change)
     function updateClock() {
       const now = new Date();
       const options = { weekday: 'short', month: 'short', day: 'numeric' };
@@ -53,7 +68,7 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // Chart.js Charts
+    // Chart.js Charts (Existing Charts - No change)
     new Chart(document.getElementById('monthlyChart'), {
       type: 'bar',
       data: {
@@ -103,6 +118,104 @@
       options: {
         responsive: true,
         plugins: { legend: { display: false } }
+      }
+    });
+
+    // Polar Area Chart: Money In (Original config)
+    new Chart(document.getElementById('moneyInChart'), {
+      type: 'polarArea',
+      data: {
+        labels: ['Deposit', 'Individual', 'Business', 'Mshwari'],
+        datasets: [{
+          label: 'Ksh In',
+          data: [30000, 15000, 8000, 5000], // Example data
+          backgroundColor: [
+            'rgba(75, 192, 192, 0.7)', // Deposit
+            'rgba(153, 102, 255, 0.7)', // Individual
+            'rgba(255, 159, 64, 0.7)', // Business
+            'rgba(201, 203, 207, 0.7)'  // Mshwari
+          ],
+          borderColor: [
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)',
+            'rgba(255, 159, 64, 1)',
+            'rgba(201, 203, 207, 1)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          title: {
+            display: false, // Title handled by h4 tag
+          }
+        },
+        scales: {
+          r: {
+            pointLabels: {
+              display: true,
+              centerPointLabels: true,
+              font: {
+                size: 14
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Polar Area Chart: Money Out (Original config)
+    new Chart(document.getElementById('moneyOutChart'), {
+      type: 'polarArea',
+      data: {
+        labels: ['Sent', 'Buy goods', 'Paybill', 'Pochi', 'Fuliza', 'Withdrawal'],
+        datasets: [{
+          label: 'Ksh Out',
+          data: [10000, 7500, 12000, 2000, 3000, 5000], // Example data
+          backgroundColor: [
+            'rgba(255, 99, 132, 0.7)',
+            'rgba(54, 162, 235, 0.7)',
+            'rgba(255, 206, 86, 0.7)',
+            'rgba(75, 192, 192, 0.7)',
+            'rgba(153, 102, 255, 0.7)',
+            'rgba(255, 159, 64, 0.7)'
+          ],
+          borderColor: [
+            'rgba(255, 99, 132, 1)',
+            'rgba(54, 162, 235, 1)',
+            'rgba(255, 206, 86, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)',
+            'rgba(255, 159, 64, 1)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          title: {
+            display: false, // Title handled by h4 tag
+          }
+        },
+        scales: {
+          r: {
+            pointLabels: {
+              display: true,
+              centerPointLabels: true,
+              font: {
+                size: 14
+              }
+            }
+          }
+        }
       }
     });
   </script>
