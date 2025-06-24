@@ -56,7 +56,7 @@
     </a>
   </footer>
 
-  <script>
+ <script>
     // Live Clock (No change)
     function updateClock() {
       const now = new Date();
@@ -68,14 +68,56 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // Chart.js Charts (Existing Charts - No change)
+    // --- Chart Data Initialization ---
+    // Try to load data from localStorage, ama use default sample data
+    let chartData = JSON.parse(localStorage.getItem('mpesaChartData'));
+
+    // Define default data if no Mpesa data is found in localStorage
+    const defaultChartData = {
+      monthlySpending: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        data: [5000, 7200, 6600, 4800, 8200, 7600]
+      },
+      category: {
+        labels: ['Food', 'Transport', 'Bills', 'Shopping', 'Health'],
+        data: [25, 15, 30, 20, 10]
+      },
+      dailyTrend: {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        data: [1200, 900, 1500, 800, 1300, 700, 1100]
+      },
+      moneyIn: {
+        labels: ['Deposit', 'Individual', 'Business', 'Mshwari'],
+        data: [30000, 15000, 8000, 5000]
+      },
+      moneyOut: {
+        labels: ['Sent', 'Buy goods', 'Paybill', 'Pochi', 'Fuliza', 'Withdrawal'],
+        data: [10000, 7500, 12000, 2000, 3000, 5000]
+      }
+    };
+
+    if (!chartData) {
+      console.log("No Mpesa data found in localStorage. Using default sample data.");
+      chartData = defaultChartData;
+    } else {
+        console.log("Mpesa data loaded from localStorage.");
+        // Ensure all chart keys exist, providing defaults if parsing didn't create them
+        for (const key in defaultChartData) {
+            if (!chartData[key] || chartData[key].data.length === 0) {
+                chartData[key] = defaultChartData[key];
+            }
+        }
+    }
+
+
+    // Chart.js Charts - Now using dynamic 'chartData' object
     new Chart(document.getElementById('monthlyChart'), {
       type: 'bar',
       data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        labels: chartData.monthlySpending.labels,
         datasets: [{
           label: 'Ksh Spent',
-          data: [5000, 7200, 6600, 4800, 8200, 7600],
+          data: chartData.monthlySpending.data,
           backgroundColor: '#38bdf8'
         }]
       },
@@ -88,9 +130,9 @@
     new Chart(document.getElementById('categoryChart'), {
       type: 'pie',
       data: {
-        labels: ['Food', 'Transport', 'Bills', 'Shopping', 'Health'],
+        labels: chartData.category.labels,
         datasets: [{
-          data: [25, 15, 30, 20, 10],
+          data: chartData.category.data,
           backgroundColor: ['#f87171', '#60a5fa', '#fbbf24', '#34d399', '#a78bfa']
         }]
       },
@@ -105,10 +147,10 @@
     new Chart(document.getElementById('trendChart'), {
       type: 'line',
       data: {
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        labels: chartData.dailyTrend.labels,
         datasets: [{
           label: 'Spending (Ksh)',
-          data: [1200, 900, 1500, 800, 1300, 700, 1100],
+          data: chartData.dailyTrend.data,
           borderColor: '#4f46e5',
           backgroundColor: 'rgba(79, 70, 229, 0.2)',
           tension: 0.4,
@@ -121,25 +163,27 @@
       }
     });
 
-   
+    // Polar Area Chart: Money In
     new Chart(document.getElementById('moneyInChart'), {
       type: 'polarArea',
       data: {
-        labels: ['Deposit', 'Individual', 'Business', 'Mshwari'],
+        labels: chartData.moneyIn.labels,
         datasets: [{
           label: 'Ksh In',
-          data: [30000, 15000, 8000, 5000], 
+          data: chartData.moneyIn.data,
           backgroundColor: [
-            'rgba(75, 192, 192, 0.7)', 
-            'rgba(153, 102, 255, 0.7)', 
+            'rgba(75, 192, 192, 0.7)',
+            'rgba(153, 102, 255, 0.7)',
             'rgba(255, 159, 64, 0.7)',
-            'rgba(201, 203, 207, 0.7)'  
+            'rgba(201, 203, 207, 0.7)',
+            'rgba(169, 169, 169, 0.7)' // Other In
           ],
           borderColor: [
             'rgba(75, 192, 192, 1)',
             'rgba(153, 102, 255, 1)',
             'rgba(255, 159, 64, 1)',
-            'rgba(201, 203, 207, 1)'
+            'rgba(201, 203, 207, 1)',
+            'rgba(169, 169, 169, 1)'
           ],
           borderWidth: 1
         }]
@@ -147,42 +191,33 @@
       options: {
         responsive: true,
         plugins: {
-          legend: {
-            position: 'top',
-          },
-          title: {
-            display: false, 
-          }
+          legend: { position: 'top' },
+          title: { display: false }
         },
         scales: {
           r: {
-            pointLabels: {
-              display: true,
-              centerPointLabels: true,
-              font: {
-                size: 14
-              }
-            }
+            pointLabels: { display: true, centerPointLabels: true, font: { size: 14 } }
           }
         }
       }
     });
 
-
+    // Polar Area Chart: Money Out
     new Chart(document.getElementById('moneyOutChart'), {
       type: 'polarArea',
       data: {
-        labels: ['Sent', 'Buy goods', 'Paybill', 'Pochi', 'Fuliza', 'Withdrawal'],
+        labels: chartData.moneyOut.labels,
         datasets: [{
           label: 'Ksh Out',
-          data: [10000, 7500, 12000, 2000, 3000, 5000], 
+          data: chartData.moneyOut.data,
           backgroundColor: [
             'rgba(255, 99, 132, 0.7)',
             'rgba(54, 162, 235, 0.7)',
             'rgba(255, 206, 86, 0.7)',
             'rgba(75, 192, 192, 0.7)',
             'rgba(153, 102, 255, 0.7)',
-            'rgba(255, 159, 64, 0.7)'
+            'rgba(255, 159, 64, 0.7)',
+            'rgba(220, 220, 220, 0.7)' 
           ],
           borderColor: [
             'rgba(255, 99, 132, 1)',
@@ -190,7 +225,8 @@
             'rgba(255, 206, 86, 1)',
             'rgba(75, 192, 192, 1)',
             'rgba(153, 102, 255, 1)',
-            'rgba(255, 159, 64, 1)'
+            'rgba(255, 159, 64, 1)',
+            'rgba(220, 220, 220, 1)'
           ],
           borderWidth: 1
         }]
@@ -198,22 +234,12 @@
       options: {
         responsive: true,
         plugins: {
-          legend: {
-            position: 'top',
-          },
-          title: {
-            display: false, 
-          }
+          legend: { position: 'top' },
+          title: { display: false }
         },
         scales: {
           r: {
-            pointLabels: {
-              display: true,
-              centerPointLabels: true,
-              font: {
-                size: 14
-              }
-            }
+            pointLabels: { display: true, centerPointLabels: true, font: { size: 14 } }
           }
         }
       }

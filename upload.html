@@ -7,16 +7,19 @@
   <link rel="stylesheet" href="upload.css" />
   <script src="https://kit.fontawesome.com/d08ab046b6.js" crossorigin="anonymous"></script>
 
+  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
 </head>
 <body>
   <main class="page-content">
     <div class="upload-container">
-      <h2>Upload Files</h2>
+      <h2>Upload Mpesa Statement</h2>
       <div class="upload-box">
-        <p class="upload-label">Select File here</p>
-        <p class="upload-support">Files Supported: PDF, CSV, EXCEL </p>
+        <p class="upload-label">Drag & Drop or Select File here</p>
+        <p class="upload-support">Files Supported: Excel (.xlsx, .xls), CSV (.csv)</p>
+        <input type="file" id="fileInput" accept=".csv, .xls, .xlsx" />
         <label for="fileInput" class="upload-btn">Choose File</label>
-        <input type="file" id="fileInput" hidden />
+        <div id="uploadStatus" style="margin-top: 15px; font-weight: bold; color: #333;"></div>
+        <button id="processAndGoHome" style="display: none; margin-top: 20px; padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1em;">View Dashboard</button>
       </div>
     </div>
   </main>
