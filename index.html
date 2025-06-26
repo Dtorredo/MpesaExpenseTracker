@@ -11,7 +11,7 @@
 </head>
 <body>
   <header class="top-bar" id="clock">
-    Loading time...
+    Loading 
   </header>
 
   <main class="main">
@@ -68,11 +68,10 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // --- Chart Data Initialization ---
-    // Try to load data from localStorage, ama use default sample data
+    
     let chartData = JSON.parse(localStorage.getItem('mpesaChartData'));
 
-    // Define default data if no Mpesa data is found in localStorage
+   
     const defaultChartData = {
       monthlySpending: {
         labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
@@ -101,7 +100,6 @@
       chartData = defaultChartData;
     } else {
         console.log("Mpesa data loaded from localStorage.");
-        // Ensure all chart keys exist, providing defaults if parsing didn't create them
         for (const key in defaultChartData) {
             if (!chartData[key] || chartData[key].data.length === 0) {
                 chartData[key] = defaultChartData[key];
@@ -110,7 +108,6 @@
     }
 
 
-    // Chart.js Charts - Now using dynamic 'chartData' object
     new Chart(document.getElementById('monthlyChart'), {
       type: 'bar',
       data: {

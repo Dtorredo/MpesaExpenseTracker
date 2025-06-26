@@ -81,16 +81,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- processMpesaStatement function remains the same, but you will modify it based on debugging ---
     function processMpesaStatement(data) {
         if (!data || data.length < 2) {
             console.warn("No data or headers found in the statement.");
             return null;
         }
 
-        // --- Potentially finding the actual header row if it's not the first ---
         let actualHeaderRowIndex = -1;
-        // This loop tries to find a row that looks like headers
         for (let i = 0; i < data.length; i++) {
             if (data[i] && data[i].some(cell =>
                 String(cell || '').trim().toLowerCase().includes('details') ||
@@ -187,22 +184,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else if (details.includes('sent to') || details.includes('payment to') || details.includes('withdrawal') || details.includes('pay bill') || details.includes('buy goods') || transactionType.includes('withdrawal') || transactionType.includes('sent') || details.includes('till')) {
                         flowDirection = 'out';
                     } else {
-                        // Fallback: If still unsure, assume 'out' for positive amounts if it's typical spending
-                        // This might need refinement based on your common transactions
-                        // console.warn(`Row ${rowIndex + 2}: Could not determine flow for amount ${amount} and details "${details}". Defaulting to 'out'.`);
-                        // flowDirection = 'out'; // Can be dangerous, consider if this is appropriate
-                        // If you are completely unsure for a positive amount, it's better to skip it or put it in 'Other'
+                        
                     }
                 }
             }
 
 
             if (isNaN(amount) || amount <= 0 || flowDirection === '') {
-                // console.warn(`Skipping row ${rowIndex + 2} due to invalid amount (${row[amountColIdx]}) or undetermined flow: ${details}`);
                 return; // Skip invalid or unidentifiable transactions
             }
 
-            // --- Step 3: Categorize and Aggregate ---
+      
 
             // Money In Categories
             if (flowDirection === 'in') {
