@@ -24,7 +24,6 @@ def process_mpesa_dataframe_and_generate_charts(df):
     # --- Step 1: Data Cleaning and Standardization (similar to previous) ---
     df.columns = df.columns.str.strip().str.lower().str.replace('[^a-z0-9]', '', regex=True)
     
-    # You MUST adjust these mappings based on your actual Excel/CSV headers!
     column_mapping = {
         'transactioncode': 'Transaction_ID',
         'completiontime': 'Completion_Time',
@@ -34,8 +33,6 @@ def process_mpesa_dataframe_and_generate_charts(df):
         'balance': 'Balance',
         'date': 'Date', 
         'time': 'Time',
-        # Add other potential column names from your files here
-        # e.g., 'cr': 'Deposited', 'dr': 'Withdrawn'
     }
     df = df.rename(columns=column_mapping)
 
@@ -50,9 +47,7 @@ def process_mpesa_dataframe_and_generate_charts(df):
             df[col] = df[col].astype(str).str.replace(r'[^\d.-]', '', regex=True)
             df[col] = pd.to_numeric(df[col], errors='coerce')
 
-    # If 'Amount' is not directly present, try to derive it.
-    # This part is highly dependent on your CSV/Excel structure.
-    # Example: If you have separate 'Debit' and 'Credit' columns
+    
     if 'debit' in df.columns and 'credit' in df.columns and 'Amount' not in df.columns:
         df['debit'] = pd.to_numeric(df['debit'].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0)
         df['credit'] = pd.to_numeric(df['credit'].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0)
@@ -63,16 +58,13 @@ def process_mpesa_dataframe_and_generate_charts(df):
          df['Amount'] = df['deposit'].fillna(0) - df['withdrawal'].fillna(0)
 
 
-    # Ensure 'Amount' is numeric after all attempts
     df['Amount'] = pd.to_numeric(df['Amount'], errors='coerce')
 
-    # Categorize transactions (CRITICAL: Customize these rules for M-Pesa!)
     def categorize_transaction(row):
         details = str(row.get('Details', '')).lower()
         trans_type = str(row.get('Transaction_Type', '')).lower()
         amount = row.get('Amount', 0)
 
-        # Money In categories
         if amount > 0:
             if 'received from' in details or 'received on' in trans_type or 'transfer from' in details:
                 return 'Money In (Individual)'
@@ -107,18 +99,15 @@ def process_mpesa_dataframe_and_generate_charts(df):
 
     df['Category'] = df.apply(categorize_transaction, axis=1)
 
-    # Filter out invalid or incomplete rows (basic validation)
     df = df.dropna(subset=['Completion_Time', 'Amount'])
     if 'Transaction_ID' in df.columns:
         df = df[df['Transaction_ID'].astype(str).str.match(r'^[A-Z0-9]{10,}$', na=False)]
     
-    # Ensure all required columns for charts are present, even if empty
     required_cols = ['Completion_Time', 'Amount', 'Category']
     for col in required_cols:
         if col not in df.columns:
             df[col] = pd.NA # Add column if missing
 
-    # --- Step 2: Generate Chart-Ready Data ---
     chart_data = {
         "monthlySpending": {"labels": [], "data": []},
         "category": {"labels": [], "data": []},
@@ -128,35 +117,26 @@ def process_mpesa_dataframe_and_generate_charts(df):
     }
 
     if not df.empty:
-        # Monthly Spending (Expenses only)
         expenses_df = df[df['Amount'] < 0].copy()
         expenses_df['Month'] = expenses_df['Completion_Time'].dt.to_period('M')
         monthly_spending = expenses_df.groupby('Month')['Amount'].sum().abs()
         chart_data['monthlySpending']['labels'] = monthly_spending.index.strftime('%b %Y').tolist()
         chart_data['monthlySpending']['data'] = monthly_spending.tolist()
 
-        # Top Categories (Overall spending/income, or just expenses)
-        # For 'categoryChart', let's use the distribution of ALL transactions by count for now,
-        # or you can make it expenses by amount if you prefer.
-        # Let's make it total amount spent per category
+  
         category_spending = expenses_df.groupby('Category')['Amount'].sum().abs().nlargest(10) # Top 10 expenses
         chart_data['category']['labels'] = category_spending.index.tolist()
         chart_data['category']['data'] = category_spending.tolist()
 
-        # Daily Trend (Last 7 days of data, or general day of week average)
-        # Let's do average spending per day of the week
         expenses_df['DayOfWeek'] = expenses_df['Completion_Time'].dt.day_name()
         daily_trend = expenses_df.groupby('DayOfWeek')['Amount'].mean().abs()
-        # Order days correctly
         day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
         daily_trend = daily_trend.reindex(day_order, fill_value=0) # Fill missing days with 0
         chart_data['dailyTrend']['labels'] = [d[:3] for d in daily_trend.index.tolist()] # Mon, Tue etc.
         chart_data['dailyTrend']['data'] = daily_trend.tolist()
 
-        # Money In Categories (Amounts)
         money_in_df = df[df['Amount'] > 0].copy()
         money_in_categories = money_in_df.groupby('Category')['Amount'].sum()
-        # Map to chart.js labels: 'Deposit', 'Individual', 'Business', 'Mshwari', 'Other Income'
         money_in_labels = ['Cash Deposit', 'Money In (Individual)', 'Money In (Business)', 'Loan/Savings (Credit)', 'Other Income']
         money_in_data = [
             money_in_categories.get('Cash Deposit', 0),
@@ -169,10 +149,8 @@ def process_mpesa_dataframe_and_generate_charts(df):
         chart_data['moneyIn']['data'] = money_in_data
 
 
-        # Money Out Categories (Amounts - as absolute values)
         money_out_df = df[df['Amount'] < 0].copy()
         money_out_categories = money_out_df.groupby('Category')['Amount'].sum().abs()
-        # Map to chart.js labels: 'Sent', 'Buy goods', 'Paybill', 'Pochi', 'Fuliza', 'Withdrawal', 'Airtime', 'Other Expense'
         money_out_labels = ['Money Transfer (Outgoing)', 'Buy Goods', 'Bill Payment', 'Pochi La Biashara', 'Fuliza', 'Cash Withdrawal', 'Airtime', 'Other Expense']
         money_out_data = [
             money_out_categories.get('Money Transfer (Outgoing)', 0),
@@ -217,10 +195,10 @@ def upload_mpesa_data():
             error_message = "Unsupported file type. Please upload an Excel (.xlsx, .xls) or CSV (.csv) file."
 
         if not error_message:
-            # Pass the DataFrame to the new processing function
+            
             chart_data, error_message = process_mpesa_dataframe_and_generate_charts(df)
             
-            if not chart_data and not error_message: # If no error but no chart data generated
+            if not chart_data and not error_message: 
                 error_message = "No valid M-Pesa transactions could be extracted or processed for charts. Check file format and content."
 
     except Exception as e:
@@ -232,11 +210,9 @@ def upload_mpesa_data():
     if error_message:
         return jsonify({'success': False, 'error': error_message}), 400
     else:
-        # Generate a unique ID for this processed chart data set
         processed_file_id = f"chart_data_{pd.Timestamp.now().strftime('%Y%m%d%H%M%S')}_{os.urandom(4).hex()}.json"
         processed_filepath = os.path.join(app.config['PROCESSED_DATA_FOLDER'], processed_file_id)
         
-        # Save the generated chart data to a JSON file
         with open(processed_filepath, 'w') as f:
             json.dump(chart_data, f, indent=4)
 
@@ -253,17 +229,14 @@ def upload_mpesa_data():
 def get_chart_data(file_id):
     filepath = os.path.join(app.config['PROCESSED_DATA_FOLDER'], file_id)
     if os.path.exists(filepath):
-        # Directly serve the JSON file
         return send_from_directory(app.config['PROCESSED_DATA_FOLDER'], file_id, mimetype='application/json')
     else:
         return jsonify({'error': 'Processed chart data not found.'}), 404
 
-# Route for your index.html (dashboard)
 @app.route('/')
 def index():
     return app.send_static_file('index.html')
 
-# Serve static files (HTML, CSS, JS) from the current directory
 @app.route('/<path:filename>')
 def static_files(filename):
     # Security check: prevent directory traversal
@@ -272,5 +245,4 @@ def static_files(filename):
     return send_from_directory('.', filename)
 
 if __name__ == '__main__':
-    # pip install Flask pandas openpyxl
-    app.run(debug=True) # Set debug=False in production
+    app.run(debug=True) 
