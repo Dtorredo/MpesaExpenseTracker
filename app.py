@@ -36,66 +36,6 @@ def process_mpesa_dataframe_and_generate_charts(df):
     }
     df = df.rename(columns=column_mapping)
 
-    if 'Date' in df.columns and 'Time' in df.columns and 'Completion_Time' not in df.columns:
-        df['Completion_Time'] = pd.to_datetime(df['Date'] + ' ' + df['Time'], errors='coerce')
-    elif 'Completion_Time' in df.columns:
-        df['Completion_Time'] = pd.to_datetime(df['Completion_Time'], errors='coerce')
-
-    numeric_cols = ['Amount', 'Balance'] # Focus on final 'Amount' and 'Balance' after merge
-    for col in numeric_cols:
-        if col in df.columns:
-            df[col] = df[col].astype(str).str.replace(r'[^\d.-]', '', regex=True)
-            df[col] = pd.to_numeric(df[col], errors='coerce')
-
-    
-    if 'debit' in df.columns and 'credit' in df.columns and 'Amount' not in df.columns:
-        df['debit'] = pd.to_numeric(df['debit'].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0)
-        df['credit'] = pd.to_numeric(df['credit'].astype(str).str.replace(r'[^\d.]', '', regex=True), errors='coerce').fillna(0)
-        df['Amount'] = df['credit'] - df['debit']
-    elif 'Amount' not in df.columns and 'withdrawn' in df.columns and 'deposited' in df.columns:
-         df['Amount'] = df['deposited'].fillna(0) - df['withdrawn'].fillna(0)
-    elif 'Amount' not in df.columns and 'withdrawal' in df.columns and 'deposit' in df.columns:
-         df['Amount'] = df['deposit'].fillna(0) - df['withdrawal'].fillna(0)
-
-
-    df['Amount'] = pd.to_numeric(df['Amount'], errors='coerce')
-
-    def categorize_transaction(row):
-        details = str(row.get('Details', '')).lower()
-        trans_type = str(row.get('Transaction_Type', '')).lower()
-        amount = row.get('Amount', 0)
-
-        if amount > 0:
-            if 'received from' in details or 'received on' in trans_type or 'transfer from' in details:
-                return 'Money In (Individual)'
-            elif 'till' in details or 'pay bill' in details and 'received' in trans_type: # Assuming businesses might pay to your till/paybill
-                return 'Money In (Business)'
-            elif 'deposit' in trans_type or 'cash deposit' in details:
-                return 'Cash Deposit'
-            elif 'mshwari' in details or 'kcb m-pesa' in details or 'loan' in details or 'mshwari' in trans_type:
-                return 'Loan/Savings (Credit)'
-            else:
-                return 'Other Income'
-        # Money Out categories
-        elif amount < 0:
-            if 'airtime' in details or 'airtime purchase' in trans_type:
-                return 'Airtime'
-            elif 'pay bill' in trans_type or 'paid to' in details:
-                return 'Bill Payment'
-            elif 'buy goods' in trans_type or 'buy goods' in details:
-                return 'Buy Goods'
-            elif 'send money' in trans_type or 'sent to' in details:
-                return 'Money Transfer (Outgoing)'
-            elif 'withdraw' in trans_type or 'withdrawal' in details:
-                return 'Cash Withdrawal'
-            elif 'fuliza' in details:
-                return 'Fuliza'
-            elif 'pochi la biashara' in details or 'pochi' in trans_type:
-                return 'Pochi La Biashara'
-            else:
-                return 'Other Expense'
-        return 'Unknown'
-
 
     df['Category'] = df.apply(categorize_transaction, axis=1)
 
