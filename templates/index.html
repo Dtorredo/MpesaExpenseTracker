@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mpesa Tracker Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet" />
+  <style>
+    .chart-container { display: none; }
+    .chart-container.active { display: block; }
+  </style>
+</head>
+<body class="bg-white text-gray-900 min-h-screen p-6">
+  <div class="max-w-6xl mx-auto">
+    <h2 class="text-3xl font-bold text-green-600 mb-6 text-center">📊 Mpesa Tracker Dashboard</h2>
+
+    <div id="noDataNotice" class="text-center text-gray-500 mb-6">
+      <p class="text-lg">📂 No data loaded. Please upload an Mpesa statement to view the dashboard.</p>
+    </div>
+
+    <!-- Filters -->
+    <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6 hidden" id="filterSection">
+      <div>
+        <label for="daterange" class="block mb-2 text-sm font-medium text-green-600">Date Range</label>
+        <input id="daterange" type="text" placeholder="Select range" class="w-full rounded-md p-2 border border-green-500"/>
+      </div>
+      <div>
+        <label for="chartType" class="block mb-2 text-sm font-medium text-green-600">Chart Type</label>
+        <select id="chartType" class="w-full rounded-md p-2 border border-green-500">
+          <option value="line">📈 Line</option>
+          <option value="bar">📊 Bar</option>
+          <option value="pie">🥧 Pie</option>
+        </select>
+      </div>
+      <div>
+        <label for="aggregation" class="block mb-2 text-sm font-medium text-green-600">Aggregation</label>
+        <select id="aggregation" class="w-full rounded-md p-2 border border-green-500">
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+        </select>
+      </div>
+      <div>
+        <label for="txnType" class="block mb-2 text-sm font-medium text-green-600">Transaction Type</label>
+        <select id="txnType" class="w-full rounded-md p-2 border border-green-500">
+          <option value="all">All</option>
+          <option value="PayBill">M-PESA PayBill</option>
+          <option value="P2P">P2P</option>
+          <option value="Airtime">Airtime</option>
+        </select>
+      </div>
+      <div class="flex items-center">
+        <label class="flex items-center gap-2 text-sm font-medium text-green-600">
+          <input type="checkbox" id="compareMode" class="accent-green-600"/>
+          Compare Mode
+        </label>
+      </div>
+      <div class="flex items-end">
+  <button onclick="loadChart()" class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded shadow-md transition-transform transform hover:scale-105">
+    🚀 Apply
+  </button>
+</div>
+<div class="flex items-end">
+  <button onclick="showTypeBreakdown()" class="w-full bg-yellow-400 hover:bg-yellow-500 text-white font-semibold py-2 px-4 rounded shadow-md">
+    📊 Type Breakdown
+  </button>
+</div>
+      </div>
+    </div>
+
+    <!-- Chart containers -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="chartsWrapper">
+      <div id="lineChartContainer" class="chart-container">
+        <canvas id="lineChart" height="300"></canvas>
+      </div>
+      <div id="barChartContainer" class="chart-container">
+        <canvas id="barChart" height="300"></canvas>
+      </div>
+      <div id="pieChartContainer" class="chart-container">
+        <canvas id="pieChart" height="300"></canvas>
+      </div>
+      <div id="comparisonChartContainer" class="chart-container">
+        <canvas id="comparisonChart" height="300"></canvas>
+      </div>
+      <div id="typeBreakdownContainer" class="chart-container">
+        <canvas id="typeBreakdownChart" height="300"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white border border-gray-300 shadow-md px-6 py-3 rounded-full flex gap-8">
+    <a href="/" class="text-center text-green-600 hover:text-green-800">
+      <i class="fas fa-home"></i><br/><small>Home</small>
+    </a>
+    <a href="/upload" class="text-center text-green-600 hover:text-green-800">
+      <i class="fa-solid fa-cloud-arrow-up"></i><br/><small>Upload</small>
+    </a>
+  </footer>
+
+  <script>
+    let rawData = null;
+    let lineChart, barChart, pieChart, comparisonChart;
+
+    flatpickr("#daterange", {
+      mode: "range",
+      dateFormat: "Y-m-d"
+    });
+
+    function showChart(type, isCompare) {
+      document.querySelectorAll('.chart-container').forEach(div => div.classList.remove('active'));
+      if (isCompare) {
+        document.getElementById("comparisonChartContainer").classList.add('active');
+      } else {
+        document.getElementById(`${type}ChartContainer`).classList.add('active');
+      }
+    }
+
+    function cumulativeSum(arr) {
+      const result = [];
+      arr.reduce((acc, val, i) => result[i] = acc + val, 0);
+      return result;
+    }
+
+    function groupData(data, mode) {
+      const grouped = {};
+      for (let i = 0; i < data.dates.length; i++) {
+        const date = new Date(data.dates[i]);
+        let key = data.dates[i];
+        if (mode === "weekly") {
+          const firstDay = new Date(date.setDate(date.getDate() - date.getDay()));
+          key = firstDay.toISOString().split('T')[0];
+        } else if (mode === "monthly") {
+          key = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2, '0')}`;
+        }
+        if (!grouped[key]) grouped[key] = { income: 0, expenses: 0 };
+        grouped[key].income += data.income[i];
+        grouped[key].expenses += data.expenses[i];
+      }
+      const labels = Object.keys(grouped).sort();
+      const income = labels.map(label => grouped[label].income);
+      const expenses = labels.map(label => grouped[label].expenses);
+      return { labels, income, expenses };
+    }
+
+    function loadChart() {
+      const stored = sessionStorage.getItem("mpesaData");
+      if (!stored) {
+        document.getElementById("noDataNotice").style.display = "block";
+        document.getElementById("filterSection").classList.add("hidden");
+        return;
+      }
+      document.getElementById("noDataNotice").style.display = "none";
+      document.getElementById("filterSection").classList.remove("hidden");
+
+      rawData = JSON.parse(stored);
+
+      const [startDate, endDate] = document.getElementById("daterange").value.split(" to ") || [];
+      const aggregation = document.getElementById("aggregation").value;
+      const chartType = document.getElementById("chartType").value;
+      const txnFilter = document.getElementById("txnType").value;
+      const isCompare = document.getElementById("compareMode").checked;
+
+      const filteredData = { dates: [], income: [], expenses: [] };
+      const comparisonData = { dates: [], income: [], expenses: [] };
+
+      for (let i = 0; i < rawData.dates.length; i++) {
+        const date = rawData.dates[i];
+        const type = rawData.types[i]; // <-- Make sure this exists in your JSON
+        const inDateRange = !startDate || (date >= startDate && date <= endDate);
+        if (!inDateRange) continue;
+
+        // Main dataset
+        if (txnFilter === "all" || type === txnFilter) {
+          filteredData.dates.push(date);
+          filteredData.income.push(rawData.income[i]);
+          filteredData.expenses.push(rawData.expenses[i]);
+        }
+
+        // Secondary set for comparison (only when comparing)
+        if (isCompare && type !== txnFilter && txnFilter !== "all") {
+          comparisonData.dates.push(date);
+          comparisonData.income.push(rawData.income[i]);
+          comparisonData.expenses.push(rawData.expenses[i]);
+        }
+      }
+
+      const grouped = groupData(filteredData, aggregation);
+      const balance = cumulativeSum(grouped.income.map((v, i) => v - grouped.expenses[i]));
+      const grouped2 = isCompare ? groupData(comparisonData, aggregation) : null;
+
+      showChart(chartType, isCompare);
+
+      if (lineChart) lineChart.destroy();
+      if (barChart) barChart.destroy();
+      if (pieChart) pieChart.destroy();
+      if (comparisonChart) comparisonChart.destroy();
+
+      if (isCompare) {
+        comparisonChart = new Chart(document.getElementById("comparisonChart"), {
+          type: chartType,
+          data: {
+            labels: grouped.labels,
+            datasets: [
+              { label: `${txnFilter}`, data: grouped.income, backgroundColor: "#10B981", borderColor: "#10B981", fill: false },
+              { label: `Other`, data: grouped2.income, backgroundColor: "#FBBF24", borderColor: "#FBBF24", fill: false }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: { tooltip: { enabled: true }, legend: { labels: { color: "black" } } },
+            scales: { x: { ticks: { color: 'black' } }, y: { ticks: { color: 'black' } } }
+          }
+        });
+        return;
+      }
+
+      if (chartType === "line") {
+        lineChart = new Chart(document.getElementById("lineChart"), {
+          type: 'line',
+          data: {
+            labels: grouped.labels,
+            datasets: [
+              { label: "Income", data: grouped.income, borderColor: "#10B981", backgroundColor: "transparent", tension: 0.3 },
+              { label: "Expenses", data: grouped.expenses, borderColor: "#EF4444", backgroundColor: "transparent", tension: 0.3 },
+              { label: "Running Balance", data: balance, borderColor: "#3B82F6", backgroundColor: "transparent", tension: 0.3 }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: { tooltip: { enabled: true }, legend: { labels: { color: "black" } } },
+            scales: { x: { ticks: { color: 'black' } }, y: { ticks: { color: 'black' } } }
+          }
+        });
+      }
+
+      if (chartType === "bar") {
+        barChart = new Chart(document.getElementById("barChart"), {
+          type: 'bar',
+          data: {
+            labels: grouped.labels,
+            datasets: [
+              { label: "Income", data: grouped.income, backgroundColor: "#10B981" },
+              { label: "Expenses", data: grouped.expenses, backgroundColor: "#EF4444" },
+              { label: "Running Balance", data: balance, backgroundColor: "#3B82F6" }
+            ]
+          },
+          options: {
+            responsive: true,
+            plugins: { tooltip: { enabled: true }, legend: { labels: { color: "black" } } },
+            scales: { x: { ticks: { color: 'black' } }, y: { ticks: { color: 'black' } } }
+          }
+        });
+      }
+
+      if (chartType === "pie") {
+        const totalIncome = grouped.income.reduce((a, b) => a + b, 0);
+        const totalExpenses = grouped.expenses.reduce((a, b) => a + b, 0);
+        const totalBalance = balance[balance.length - 1];
+        pieChart = new Chart(document.getElementById("pieChart"), {
+          type: 'pie',
+          data: {
+            labels: ["Income", "Expenses", "Running Balance"],
+            datasets: [{
+              data: [totalIncome, totalExpenses, totalBalance],
+              backgroundColor: ["#10B981", "#EF4444", "#3B82F6"]
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { tooltip: { enabled: true }, legend: { labels: { color: "black" } } }
+          }
+        });
+      }
+    }
+
+    if (sessionStorage.getItem("mpesaData")) {
+      loadChart();
+    }
+
+    function showTypeBreakdown() {
+  const stored = sessionStorage.getItem("mpesaData");
+  if (!stored) return;
+  const raw = JSON.parse(stored);
+
+  const [startDate, endDate] = document.getElementById("daterange").value.split(" to ") || [];
+  const inDateRange = (date) => !startDate || (date >= startDate && date <= endDate);
+
+  const typeCounts = {};
+  const colorMap = {
+    "P2P": "#34D399",
+    "PayBill": "#3B82F6",
+    "Airtime": "#FBBF24",
+    "Charges": "#F87171",
+    "Other": "#A78BFA"
+  };
+
+  for (let i = 0; i < raw.dates.length; i++) {
+    const date = raw.dates[i];
+    const type = raw.types?.[i] || "Other";
+    if (!inDateRange(date)) continue;
+    typeCounts[type] = (typeCounts[type] || 0) + 1;
+  }
+
+  const labels = Object.keys(typeCounts);
+  const values = labels.map(label => typeCounts[label]);
+  const bgColors = labels.map(label => colorMap[label] || "#D1D5DB");
+
+  // Clear old
+  if (window.typeBreakdownChart) window.typeBreakdownChart.destroy();
+
+  // Show container
+  document.querySelectorAll('.chart-container').forEach(div => div.classList.remove('active'));
+  document.getElementById("typeBreakdownContainer").classList.add("active");
+
+  // Render chart
+  window.typeBreakdownChart = new Chart(document.getElementById("typeBreakdownChart"), {
+    type: 'pie',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values,
+        backgroundColor: bgColors
+      }]
+    },
+    options: {
+      plugins: {
+        tooltip: { enabled: true },
+        legend: { labels: { color: "black" } }
+      }
+    }
+  });
+}
+  </script>
+  <script src="https://kit.fontawesome.com/d08ab046b6.js" crossorigin="anonymous"></script>
+</body>
+</html>
