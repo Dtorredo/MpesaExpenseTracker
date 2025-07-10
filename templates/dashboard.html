@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <style>
+        .chart-container { 
+            display: none; 
+            height: 400px;
+            position: relative;
+        }
+        .chart-container.active { 
+            display: block; 
+        }
+        .chart-container canvas {
+            max-height: 350px !important;
+        }
+        .form-label {
+            color: #198754;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h3 class="text-center">Expense Tracker</h3>
+        <hr>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="/">Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/upload">Upload</a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="container-fluid">
+            <h2 class="text-center text-success mb-4">📊 Mpesa Tracker Dashboard</h2>
+
+            <div id="noDataNotice" class="text-center text-muted mb-4">
+                <p class="fs-5">📂 No data loaded. Please upload an Mpesa statement to view the dashboard.</p>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <h6 class="card-title">Total Income</h6>
+                                    <p class="card-text" id="totalIncome">$0.00</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <h6 class="card-title">Total Expenses</h6>
+                                    <p class="card-text" id="totalExpenses">$0.00</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card card-sm">
+                                <div class="card-body">
+                                    <h6 class="card-title">Net Balance</h6>
+                                    <p class="card-text" id="netBalance">$0.00</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Recent Transactions</h5>
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Income</th>
+                                        <th>Expenses</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactionsTableBody">
+                                    <!-- Data will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="row g-3 mb-4 d-none" id="filterSection">
+                <div class="col-md-3">
+                    <label for="daterange" class="form-label">Date Range</label>
+                    <input id="daterange" type="text" placeholder="Select range" class="form-control border-success"/>
+                </div>
+                <div class="col-md-2">
+                    <label for="chartType" class="form-label">Chart Type</label>
+                    <select id="chartType" class="form-select border-success">
+                        <option value="line">📈 Line</option>
+                        <option value="bar">📊 Bar</option>
+                        <option value="pie">🥧 Pie</option>
+                        <option value="polarArea">🎯 Polar Area</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="aggregation" class="form-label">Aggregation</label>
+                    <select id="aggregation" class="form-select border-success">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="txnType" class="form-label">Transaction Type</label>
+                    <select id="txnType" class="form-select border-success">
+                        <option value="all">All</option>
+                        <option value="PayBill">M-PESA PayBill</option>
+                        <option value="P2P">P2P</option>
+                        <option value="Airtime">Airtime</option>
+                    </select>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <div class="form-check">
+                        <input type="checkbox" id="compareMode" class="form-check-input border-success">
+                        <label class="form-check-label" for="compareMode">Compare</label>
+                    </div>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button onclick="loadChart()" class="btn btn-success w-100">
+                        🚀 Apply
+                    </button>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 mb-4 d-none" id="actionButtons">
+                <button onclick="showTypeBreakdown()" class="btn btn-warning">
+                    📊 Type Breakdown
+                </button>
+                <button onclick="generateSampleData()" class="btn btn-info">
+                    🎲 Generate Sample Data
+                </button>
+            </div>
+
+            <!-- Chart containers -->
+            <div class="row g-4" id="chartsWrapper">
+                <div id="lineChartContainer" class="col-12 chart-container">
+                    <h3 class="text-center text-success mb-3">Line Chart</h3>
+                    <canvas id="lineChart"></canvas>
+                </div>
+                <div id="barChartContainer" class="col-12 chart-container">
+                    <h3 class="text-center text-success mb-3">Bar Chart</h3>
+                    <canvas id="barChart"></canvas>
+                </div>
+                <div id="pieChartContainer" class="col-12 chart-container">
+                    <h3 class="text-center text-success mb-3">Pie Chart</h3>
+                    <canvas id="pieChart"></canvas>
+                </div>
+                <div id="polarAreaChartContainer" class="col-12 chart-container">
+                    <h3 class="text-center text-success mb-3">Polar Area Chart</h3>
+                    <canvas id="polarAreaChart"></canvas>
+                </div>
+                <div id="comparisonChartContainer" class="col-12 chart-container">
+                    <h3 class="text-center text-success mb-3">Comparison Chart</h3>
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+                <div id="typeBreakdownContainer" class="col-12 chart-container">
+                    <h3 class="text-center text-success mb-3">Transaction Type Breakdown</h3>
+                    <canvas id="typeBreakdownChart"></canvas>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://kit.fontawesome.com/d08ab046b6.js" crossorigin="anonymous"></script>
+    <script>
+        let rawData = null;
+        let lineChart, barChart, pieChart, polarAreaChart, comparisonChart, typeBreakdownChart;
+
+        // Initialize flatpickr
+        flatpickr("#daterange", {
+            mode: "range",
+            dateFormat: "Y-m-d"
+        });
+
+        function showChart(type, isCompare) {
+            document.querySelectorAll('.chart-container').forEach(div => div.classList.remove('active'));
+            if (isCompare) {
+                document.getElementById("comparisonChartContainer").classList.add('active');
+            } else {
+                document.getElementById(`${type}ChartContainer`).classList.add('active');
+            }
+        }
+
+        function cumulativeSum(arr) {
+            const result = [];
+            let accumulator = 0;
+            for (let i = 0; i < arr.length; i++) {
+                accumulator += arr[i];
+                result.push(accumulator);
+            }
+            return result;
+        }
+
+        function groupData(data, mode) {
+            const grouped = {};
+            for (let i = 0; i < data.dates.length; i++) {
+                const date = new Date(data.dates[i]);
+                let key = data.dates[i];
+                
+                if (mode === "weekly") {
+                    const firstDay = new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
+                    key = firstDay.toISOString().split('T')[0];
+                } else if (mode === "monthly") {
+                    key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                }
+                
+                if (!grouped[key]) {
+                    grouped[key] = { income: 0, expenses: 0 };
+                }
+                grouped[key].income += data.income[i] || 0;
+                grouped[key].expenses += data.expenses[i] || 0;
+            }
+            
+            const labels = Object.keys(grouped).sort();
+            const income = labels.map(label => grouped[label].income);
+            const expenses = labels.map(label => grouped[label].expenses);
+            return { labels, income, expenses };
+        }
+
+        function filterDataByType(data, txnFilter) {
+            const filtered = { dates: [], income: [], expenses: [], types: [] };
+            
+            for (let i = 0; i < data.dates.length; i++) {
+                const type = data.types?.[i] || "Other";
+                
+                if (txnFilter === "all" || type === txnFilter) {
+                    filtered.dates.push(data.dates[i]);
+                    filtered.income.push(data.income[i] || 0);
+                    filtered.expenses.push(data.expenses[i] || 0);
+                    filtered.types.push(type);
+                }
+            }
+            
+            return filtered;
+        }
+
+        function filterDataByDateRange(data, startDate, endDate) {
+            const filtered = { dates: [], income: [], expenses: [], types: [] };
+            
+            for (let i = 0; i < data.dates.length; i++) {
+                const date = data.dates[i];
+                const inDateRange = !startDate || (date >= startDate && date <= endDate);
+                
+                if (inDateRange) {
+                    filtered.dates.push(date);
+                    filtered.income.push(data.income[i] || 0);
+                    filtered.expenses.push(data.expenses[i] || 0);
+                    filtered.types.push(data.types?.[i] || "Other");
+                }
+            }
+            
+            return filtered;
+        }
+
+        function destroyCharts() {
+            if (lineChart) { lineChart.destroy(); lineChart = null; }
+            if (barChart) { barChart.destroy(); barChart = null; }
+            if (pieChart) { pieChart.destroy(); pieChart = null; }
+            if (polarAreaChart) { polarAreaChart.destroy(); polarAreaChart = null; }
+            if (comparisonChart) { comparisonChart.destroy(); comparisonChart = null; }
+            if (typeBreakdownChart) { typeBreakdownChart.destroy(); typeBreakdownChart = null; }
+        }
+
+        // Add resize handling
+        function handleResize() {
+            const charts = [lineChart, barChart, pieChart, polarAreaChart, comparisonChart, typeBreakdownChart];
+            charts.forEach(chart => {
+                if (chart) {
+                    chart.resize();
+                }
+            });
+        }
+
+        // Debounced resize handler
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(handleResize, 100);
+        });
+
+        function updateSummaryCards(filteredData) {
+            const totalIncome = filteredData.income.reduce((a, b) => a + b, 0);
+            const totalExpenses = filteredData.expenses.reduce((a, b) => a + b, 0);
+            const netBalance = totalIncome - totalExpenses;
+
+            document.getElementById('totalIncome').textContent = `$${totalIncome.toFixed(2)}`;
+            document.getElementById('totalExpenses').textContent = `$${totalExpenses.toFixed(2)}`;
+            document.getElementById('netBalance').textContent = `$${netBalance.toFixed(2)}`;
+        }
+
+        function populateTransactionsTable(filteredData) {
+            const tableBody = document.getElementById('transactionsTableBody');
+            tableBody.innerHTML = ''; // Clear existing data
+
+            // Get last 10 transactions, or fewer if less than 10
+            const startIndex = Math.max(0, filteredData.dates.length - 10);
+            for (let i = filteredData.dates.length - 1; i >= startIndex; i--) {
+                const row = `
+                    <tr>
+                        <td>${filteredData.dates[i]}</td>
+                        <td>${filteredData.types[i]}</td>
+                        <td>$${filteredData.income[i].toFixed(2)}</td>
+                        <td>$${filteredData.expenses[i].toFixed(2)}</td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            }
+        }
+
+        function loadChart() {
+            const stored = sessionStorage.getItem("mpesaData");
+            if (!stored) {
+                document.getElementById("noDataNotice").classList.remove("d-none");
+                document.getElementById("filterSection").classList.add("d-none");
+                document.getElementById("actionButtons").classList.add("d-none");
+                return;
+            }
+            
+            document.getElementById("noDataNotice").classList.add("d-none");
+            document.getElementById("filterSection").classList.remove("d-none");
+            document.getElementById("actionButtons").classList.remove("d-none");
+
+            rawData = JSON.parse(stored);
+
+            const dateRangeValue = document.getElementById("daterange").value;
+            const [startDate, endDate] = dateRangeValue.includes(" to ") ? dateRangeValue.split(" to ") : [null, null];
+            const aggregation = document.getElementById("aggregation").value;
+            const chartType = document.getElementById("chartType").value;
+            const txnFilter = document.getElementById("txnType").value;
+            const isCompare = document.getElementById("compareMode").checked;
+
+            // Filter data by date range first
+            let filteredData = filterDataByDateRange(rawData, startDate, endDate);
+            
+            // Then filter by transaction type
+            filteredData = filterDataByType(filteredData, txnFilter);
+
+            if (filteredData.dates.length === 0) {
+                alert("No data found for the selected filters.");
+                return;
+            }
+
+            updateSummaryCards(filteredData);
+            populateTransactionsTable(filteredData);
+
+            const grouped = groupData(filteredData, aggregation);
+            const balance = cumulativeSum(grouped.income.map((v, i) => v - grouped.expenses[i]));
+
+            showChart(chartType, isCompare);
+            destroyCharts();
+
+            if (isCompare) {
+                // For comparison, show filtered vs all data
+                const allData = filterDataByDateRange(rawData, startDate, endDate);
+                const allGrouped = groupData(allData, aggregation);
+                
+                comparisonChart = new Chart(document.getElementById("comparisonChart"), {
+                    type: (chartType === "pie" || chartType === "polarArea") ? "bar" : chartType,
+                    data: {
+                        labels: grouped.labels,
+                        datasets: [
+                            { 
+                                label: `${txnFilter} Income`, 
+                                data: grouped.income, 
+                                backgroundColor: "#198754", 
+                                borderColor: "#198754", 
+                                fill: false 
+                            },
+                            { 
+                                label: `All Income`, 
+                                data: allGrouped.income, 
+                                backgroundColor: "#ffc107", 
+                                borderColor: "#ffc107", 
+                                fill: false 
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            tooltip: { enabled: true }, 
+                            legend: { labels: { color: "black" } } 
+                        },
+                        scales: { 
+                            x: { ticks: { color: 'black' } }, 
+                            y: { ticks: { color: 'black' } } 
+                        }
+                    }
+                });
+                return;
+            }
+
+            if (chartType === "line") {
+                lineChart = new Chart(document.getElementById("lineChart"), {
+                    type: 'line',
+                    data: {
+                        labels: grouped.labels,
+                        datasets: [
+                            { 
+                                label: "Income", 
+                                data: grouped.income, 
+                                borderColor: "#198754", 
+                                backgroundColor: "rgba(25, 135, 84, 0.1)", 
+                                tension: 0.3 
+                            },
+                            { 
+                                label: "Expenses", 
+                                data: grouped.expenses, 
+                                borderColor: "#dc3545", 
+                                backgroundColor: "rgba(220, 53, 69, 0.1)", 
+                                tension: 0.3 
+                            },
+                            { 
+                                label: "Running Balance", 
+                                data: balance, 
+                                borderColor: "#0d6efd", 
+                                backgroundColor: "rgba(13, 110, 253, 0.1)", 
+                                tension: 0.3 
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            tooltip: { enabled: true }, 
+                            legend: { labels: { color: "black" } } 
+                        },
+                        scales: { 
+                            x: { ticks: { color: 'black' } }, 
+                            y: { ticks: { color: 'black' } } 
+                        }
+                    }
+                });
+            }
+
+            if (chartType === "bar") {
+                barChart = new Chart(document.getElementById("barChart"), {
+                    type: 'bar',
+                    data: {
+                        labels: grouped.labels,
+                        datasets: [
+                            { label: "Income", data: grouped.income, backgroundColor: "#198754" },
+                            { label: "Expenses", data: grouped.expenses, backgroundColor: "#dc3545" },
+                            { label: "Running Balance", data: balance, backgroundColor: "#0d6efd" }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            tooltip: { enabled: true }, 
+                            legend: { labels: { color: "black" } } 
+                        },
+                        scales: { 
+                            x: { ticks: { color: 'black' } }, 
+                            y: { ticks: { color: 'black' } } 
+                        }
+                    }
+                });
+            }
+
+            if (chartType === "pie") {
+                const totalIncome = grouped.income.reduce((a, b) => a + b, 0);
+                const totalExpenses = grouped.expenses.reduce((a, b) => a + b, 0);
+                const finalBalance = balance[balance.length - 1] || 0;
+                
+                pieChart = new Chart(document.getElementById("pieChart"), {
+                    type: 'pie',
+                    data: {
+                        labels: ["Income", "Expenses", "Net Balance"],
+                        datasets: [{
+                            data: [totalIncome, totalExpenses, Math.abs(finalBalance)],
+                            backgroundColor: ["#198754", "#dc3545", "#0d6efd"]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            tooltip: { enabled: true }, 
+                            legend: { labels: { color: "black" } } 
+                        }
+                    }
+                });
+            }
+
+            if (chartType === "polarArea") {
+                const totalIncome = grouped.income.reduce((a, b) => a + b, 0);
+                const totalExpenses = grouped.expenses.reduce((a, b) => a + b, 0);
+                const finalBalance = balance[balance.length - 1] || 0;
+                
+                polarAreaChart = new Chart(document.getElementById("polarAreaChart"), {
+                    type: 'polarArea',
+                    data: {
+                        labels: ["Income", "Expenses", "Net Balance"],
+                        datasets: [{
+                            data: [totalIncome, totalExpenses, Math.abs(finalBalance)],
+                            backgroundColor: [
+                                "rgba(25, 135, 84, 0.7)",
+                                "rgba(220, 53, 69, 0.7)",
+                                "rgba(13, 110, 253, 0.7)"
+                            ],
+                            borderColor: ["#198754", "#dc3545", "#0d6efd"],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            tooltip: { enabled: true }, 
+                            legend: { labels: { color: "black" } } 
+                        },
+                        scales: {
+                            r: {
+                                ticks: { color: 'black' },
+                                grid: { color: 'rgba(0, 0, 0, 0.1)' }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function showTypeBreakdown() {
+            const stored = sessionStorage.getItem("mpesaData");
+            if (!stored) return;
+            
+            const raw = JSON.parse(stored);
+            const dateRangeValue = document.getElementById("daterange").value;
+            const [startDate, endDate] = dateRangeValue.includes(" to ") ? dateRangeValue.split(" to ") : [null, null];
+
+            const typeCounts = {};
+            const colorMap = {
+                "P2P": "#198754",
+                "PayBill": "#0d6efd",
+                "Airtime": "#ffc107",
+                "Charges": "#dc3545",
+                "Other": "#6c757d"
+            };
+
+            for (let i = 0; i < raw.dates.length; i++) {
+                const date = raw.dates[i];
+                const type = raw.types?.[i] || "Other";
+                const inDateRange = !startDate || (date >= startDate && date <= endDate);
+                
+                if (inDateRange) {
+                    typeCounts[type] = (typeCounts[type] || 0) + 1;
+                }
+            }
+
+            const labels = Object.keys(typeCounts);
+            const values = labels.map(label => typeCounts[label]);
+            const bgColors = labels.map(label => colorMap[label] || "#adb5bd");
+
+            destroyCharts();
+            
+            document.querySelectorAll('.chart-container').forEach(div => div.classList.remove('active'));
+            document.getElementById("typeBreakdownContainer").classList.add("active");
+
+            typeBreakdownChart = new Chart(document.getElementById("typeBreakdownChart"), {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: bgColors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: { enabled: true },
+                        legend: { labels: { color: "black" } }
+                    }
+                }
+            });
+        }
+
+        function generateSampleData() {
+            const sampleData = {
+                dates: [
+                    "2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04", "2024-01-05",
+                    "2024-01-06", "2024-01-07", "2024-01-08", "2024-01-09", "2024-01-10"
+                ],
+                income: [5000, 0, 3000, 0, 2000, 0, 4000, 0, 1000, 0],
+                expenses: [0, 1500, 0, 800, 0, 1200, 0, 600, 0, 400],
+                types: ["P2P", "PayBill", "P2P", "Airtime", "P2P", "PayBill", "P2P", "Charges", "P2P", "Other"]
+            };
+            
+            sessionStorage.setItem("mpesaData", JSON.stringify(sampleData));
+            alert("Sample data generated! You can now use the dashboard.");
+            loadChart();
+        }
+
+        // Initialize the dashboard
+        if (sessionStorage.getItem("mpesaData")) {
+            loadChart();
+        }
+    </script>
+</body>
+</html>

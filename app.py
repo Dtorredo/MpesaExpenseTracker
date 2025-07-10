@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('dashboard.html')
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
@@ -50,6 +50,7 @@ def upload():
                 "dates": df["Completion Time"].dt.strftime("%Y-%m-%d").tolist(),
                 "income": df["Paid In"].tolist(),
                 "expenses": df["Withdrawn"].tolist(),
+                "details": df["Details"].tolist(),
                 "types": types
             })
 
