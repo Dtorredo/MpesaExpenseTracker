@@ -1,0 +1,7 @@
+# GitHub - cumau account
+Host github.com-cumau
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/id_ed25519_cumau
+
+

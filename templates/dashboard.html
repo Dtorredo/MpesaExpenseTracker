@@ -125,9 +125,15 @@
                     <label for="txnType" class="form-label">Transaction Type</label>
                     <select id="txnType" class="form-select border-success">
                         <option value="all">All</option>
-                        <option value="PayBill">M-PESA PayBill</option>
                         <option value="P2P">P2P</option>
+                        <option value="Deposit">Deposit</option>
+                        <option value="Pay In">Pay In</option>
                         <option value="Airtime">Airtime</option>
+                        <option value="Send Money">Send Money</option>
+                        <option value="PayBill">PayBill</option>
+                        <option value="M-Shwari Deposit">M-Shwari Deposit</option>
+                        <option value="Charges">Charges</option>
+                        <option value="Other">Other</option>
                     </select>
                 </div>
                 <div class="col-md-1 d-flex align-items-end">
@@ -220,7 +226,7 @@
             const grouped = {};
             for (let i = 0; i < data.dates.length; i++) {
                 const date = new Date(data.dates[i]);
-                let key = data.dates[i];
+                let key = data.dates[i].split(' ')[0]; // Use date part only
                 
                 if (mode === "weekly") {
                     const firstDay = new Date(date.getFullYear(), date.getMonth(), date.getDate() - date.getDay());
@@ -263,11 +269,11 @@
             const filtered = { dates: [], income: [], expenses: [], types: [] };
             
             for (let i = 0; i < data.dates.length; i++) {
-                const date = data.dates[i];
+                const date = data.dates[i].split(' ')[0];
                 const inDateRange = !startDate || (date >= startDate && date <= endDate);
                 
                 if (inDateRange) {
-                    filtered.dates.push(date);
+                    filtered.dates.push(data.dates[i]);
                     filtered.income.push(data.income[i] || 0);
                     filtered.expenses.push(data.expenses[i] || 0);
                     filtered.types.push(data.types?.[i] || "Other");
@@ -308,9 +314,9 @@
             const totalExpenses = filteredData.expenses.reduce((a, b) => a + b, 0);
             const netBalance = totalIncome - totalExpenses;
 
-            document.getElementById('totalIncome').textContent = `$${totalIncome.toFixed(2)}`;
-            document.getElementById('totalExpenses').textContent = `$${totalExpenses.toFixed(2)}`;
-            document.getElementById('netBalance').textContent = `$${netBalance.toFixed(2)}`;
+            document.getElementById('totalIncome').textContent = `Ksh ${totalIncome.toFixed(2)}`;
+            document.getElementById('totalExpenses').textContent = `Ksh ${totalExpenses.toFixed(2)}`;
+            document.getElementById('netBalance').textContent = `Ksh ${netBalance.toFixed(2)}`;
         }
 
         function populateTransactionsTable(filteredData) {
@@ -324,17 +330,19 @@
                     <tr>
                         <td>${filteredData.dates[i]}</td>
                         <td>${filteredData.types[i]}</td>
-                        <td>$${filteredData.income[i].toFixed(2)}</td>
-                        <td>$${filteredData.expenses[i].toFixed(2)}</td>
+                        <td>Ksh ${filteredData.income[i].toFixed(2)}</td>
+                        <td>Ksh ${filteredData.expenses[i].toFixed(2)}</td>
                     </tr>
                 `;
                 tableBody.innerHTML += row;
             }
         }
 
-        function loadChart() {
-            const stored = sessionStorage.getItem("mpesaData");
-            if (!stored) {
+        async function loadChart() {
+            const response = await fetch('/api/data');
+            rawData = await response.json();
+
+            if (!rawData || rawData.dates.length === 0) {
                 document.getElementById("noDataNotice").classList.remove("d-none");
                 document.getElementById("filterSection").classList.add("d-none");
                 document.getElementById("actionButtons").classList.add("d-none");
@@ -344,8 +352,6 @@
             document.getElementById("noDataNotice").classList.add("d-none");
             document.getElementById("filterSection").classList.remove("d-none");
             document.getElementById("actionButtons").classList.remove("d-none");
-
-            rawData = JSON.parse(stored);
 
             const dateRangeValue = document.getElementById("daterange").value;
             const [startDate, endDate] = dateRangeValue.includes(" to ") ? dateRangeValue.split(" to ") : [null, null];
@@ -362,6 +368,10 @@
 
             if (filteredData.dates.length === 0) {
                 alert("No data found for the selected filters.");
+                destroyCharts();
+                // Still update summary cards and table with empty/zero values
+                updateSummaryCards({ income: [], expenses: [] });
+                populateTransactionsTable({ dates: [], types: [], income: [], expenses: [] });
                 return;
             }
 
@@ -550,25 +560,27 @@
         }
 
         function showTypeBreakdown() {
-            const stored = sessionStorage.getItem("mpesaData");
-            if (!stored) return;
+            if (!rawData) return;
             
-            const raw = JSON.parse(stored);
             const dateRangeValue = document.getElementById("daterange").value;
             const [startDate, endDate] = dateRangeValue.includes(" to ") ? dateRangeValue.split(" to ") : [null, null];
 
             const typeCounts = {};
             const colorMap = {
                 "P2P": "#198754",
+                "Deposit": "#0dcaf0",
+                "Pay In": "#ffc107",
+                "Airtime": "#fd7e14",
+                "Send Money": "#dc3545",
                 "PayBill": "#0d6efd",
-                "Airtime": "#ffc107",
-                "Charges": "#dc3545",
+                "M-Shwari Deposit": "#6f42c1",
+                "Charges": "#d63384",
                 "Other": "#6c757d"
             };
 
-            for (let i = 0; i < raw.dates.length; i++) {
-                const date = raw.dates[i];
-                const type = raw.types?.[i] || "Other";
+            for (let i = 0; i < rawData.dates.length; i++) {
+                const date = rawData.dates[i].split(' ')[0];
+                const type = rawData.types?.[i] || "Other";
                 const inDateRange = !startDate || (date >= startDate && date <= endDate);
                 
                 if (inDateRange) {
@@ -605,26 +617,14 @@
             });
         }
 
-        function generateSampleData() {
-            const sampleData = {
-                dates: [
-                    "2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04", "2024-01-05",
-                    "2024-01-06", "2024-01-07", "2024-01-08", "2024-01-09", "2024-01-10"
-                ],
-                income: [5000, 0, 3000, 0, 2000, 0, 4000, 0, 1000, 0],
-                expenses: [0, 1500, 0, 800, 0, 1200, 0, 600, 0, 400],
-                types: ["P2P", "PayBill", "P2P", "Airtime", "P2P", "PayBill", "P2P", "Charges", "P2P", "Other"]
-            };
-            
-            sessionStorage.setItem("mpesaData", JSON.stringify(sampleData));
-            alert("Sample data generated! You can now use the dashboard.");
-            loadChart();
+        // Remove the sample data button and its logic
+        const sampleDataButton = document.querySelector('button[onclick="generateSampleData()"]');
+        if (sampleDataButton) {
+            sampleDataButton.remove();
         }
 
         // Initialize the dashboard
-        if (sessionStorage.getItem("mpesaData")) {
-            loadChart();
-        }
+        document.addEventListener('DOMContentLoaded', loadChart);
     </script>
 </body>
 </html>
