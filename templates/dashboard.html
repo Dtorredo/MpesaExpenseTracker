@@ -121,20 +121,14 @@
                         <option value="monthly">Monthly</option>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <label for="txnType" class="form-label">Transaction Type</label>
-                    <select id="txnType" class="form-select border-success">
+                <div class="col-md-3">
+                    <label for="txnTypeDropdown" class="form-label">Transaction Type</label>
+                    <select id="txnTypeDropdown" class="form-select border-success">
                         <option value="all">All</option>
-                        <option value="P2P">P2P</option>
-                        <option value="Deposit">Deposit</option>
-                        <option value="Pay In">Pay In</option>
-                        <option value="Airtime">Airtime</option>
-                        <option value="Send Money">Send Money</option>
-                        <option value="PayBill">PayBill</option>
-                        <option value="M-Shwari Deposit">M-Shwari Deposit</option>
-                        <option value="Charges">Charges</option>
-                        <option value="Other">Other</option>
                     </select>
+                    <div id="categoryCheckboxes" class="mt-2 checkbox-container">
+                        <!-- Checkboxes will be populated here -->
+                    </div>
                 </div>
                 <div class="col-md-1 d-flex align-items-end">
                     <div class="form-check">
@@ -142,7 +136,7 @@
                         <label class="form-check-label" for="compareMode">Compare</label>
                     </div>
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
+                <div class="col-md-1 d-flex align-items-end">
                     <button onclick="loadChart()" class="btn btn-success w-100">
                         🚀 Apply
                     </button>
@@ -153,9 +147,6 @@
             <div class="d-flex gap-2 mb-4 d-none" id="actionButtons">
                 <button onclick="showTypeBreakdown()" class="btn btn-warning">
                     📊 Type Breakdown
-                </button>
-                <button onclick="generateSampleData()" class="btn btn-info">
-                    🎲 Generate Sample Data
                 </button>
             </div>
 
@@ -248,13 +239,17 @@
             return { labels, income, expenses };
         }
 
-        function filterDataByType(data, txnFilter) {
+        function filterDataByType(data, selectedTypes) {
+            if (!selectedTypes || selectedTypes.length === 0) {
+                return { dates: [], income: [], expenses: [], types: [] };
+            }
+
             const filtered = { dates: [], income: [], expenses: [], types: [] };
             
             for (let i = 0; i < data.dates.length; i++) {
                 const type = data.types?.[i] || "Other";
                 
-                if (txnFilter === "all" || type === txnFilter) {
+                if (selectedTypes.includes(type)) {
                     filtered.dates.push(data.dates[i]);
                     filtered.income.push(data.income[i] || 0);
                     filtered.expenses.push(data.expenses[i] || 0);
@@ -353,23 +348,56 @@
             document.getElementById("filterSection").classList.remove("d-none");
             document.getElementById("actionButtons").classList.remove("d-none");
 
+            // Populate checkboxes if not already populated
+            const uniqueTypes = [...new Set(rawData.types)].filter(t => t);
+            const checkboxesContainer = document.getElementById('categoryCheckboxes');
+            if (checkboxesContainer.childElementCount === 0) {
+                uniqueTypes.forEach(type => {
+                    const checkboxWrapper = document.createElement('div');
+                    checkboxWrapper.classList.add('form-check', 'form-check-inline');
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.classList.add('form-check-input');
+                    checkbox.id = `check-${type.replace(/\s+/g, '-')}`;
+                    checkbox.value = type;
+                    checkbox.checked = true;
+                    const label = document.createElement('label');
+                    label.classList.add('form-check-label');
+                    label.htmlFor = checkbox.id;
+                    label.textContent = type;
+                    checkboxWrapper.appendChild(checkbox);
+                    checkboxWrapper.appendChild(label);
+                    checkboxesContainer.appendChild(checkboxWrapper);
+                });
+
+                document.getElementById('txnTypeDropdown').addEventListener('change', function() {
+                    const allSelected = this.value === 'all';
+                    document.querySelectorAll('#categoryCheckboxes input[type="checkbox"]').forEach(cb => {
+                        cb.checked = allSelected;
+                    });
+                });
+            }
+
             const dateRangeValue = document.getElementById("daterange").value;
             const [startDate, endDate] = dateRangeValue.includes(" to ") ? dateRangeValue.split(" to ") : [null, null];
             const aggregation = document.getElementById("aggregation").value;
             const chartType = document.getElementById("chartType").value;
-            const txnFilter = document.getElementById("txnType").value;
             const isCompare = document.getElementById("compareMode").checked;
+
+            const selectedTxnTypes = [];
+            document.querySelectorAll('#categoryCheckboxes input[type="checkbox"]:checked').forEach(cb => {
+                selectedTxnTypes.push(cb.value);
+            });
 
             // Filter data by date range first
             let filteredData = filterDataByDateRange(rawData, startDate, endDate);
             
             // Then filter by transaction type
-            filteredData = filterDataByType(filteredData, txnFilter);
+            filteredData = filterDataByType(filteredData, selectedTxnTypes);
 
             if (filteredData.dates.length === 0) {
                 alert("No data found for the selected filters.");
                 destroyCharts();
-                // Still update summary cards and table with empty/zero values
                 updateSummaryCards({ income: [], expenses: [] });
                 populateTransactionsTable({ dates: [], types: [], income: [], expenses: [] });
                 return;
@@ -385,30 +413,24 @@
             destroyCharts();
 
             if (isCompare) {
-                // For comparison, show filtered vs all data
-                const allData = filterDataByDateRange(rawData, startDate, endDate);
-                const allGrouped = groupData(allData, aggregation);
-                
+                const datasets = [];
+                selectedTxnTypes.forEach((type, index) => {
+                    const typeData = filterDataByType(filteredData, [type]);
+                    const groupedTypeData = groupData(typeData, aggregation);
+                    datasets.push({
+                        label: `${type} Income`,
+                        data: groupedTypeData.income,
+                        backgroundColor: `hsl(${index * 60}, 70%, 50%)`,
+                        borderColor: `hsl(${index * 60}, 70%, 50%)`,
+                        fill: false
+                    });
+                });
+
                 comparisonChart = new Chart(document.getElementById("comparisonChart"), {
                     type: (chartType === "pie" || chartType === "polarArea") ? "bar" : chartType,
                     data: {
                         labels: grouped.labels,
-                        datasets: [
-                            { 
-                                label: `${txnFilter} Income`, 
-                                data: grouped.income, 
-                                backgroundColor: "#198754", 
-                                borderColor: "#198754", 
-                                fill: false 
-                            },
-                            { 
-                                label: `All Income`, 
-                                data: allGrouped.income, 
-                                backgroundColor: "#ffc107", 
-                                borderColor: "#ffc107", 
-                                fill: false 
-                            }
-                        ]
+                        datasets: datasets
                     },
                     options: {
                         responsive: true,
@@ -615,12 +637,6 @@
                     }
                 }
             });
-        }
-
-        // Remove the sample data button and its logic
-        const sampleDataButton = document.querySelector('button[onclick="generateSampleData()"]');
-        if (sampleDataButton) {
-            sampleDataButton.remove();
         }
 
         // Initialize the dashboard

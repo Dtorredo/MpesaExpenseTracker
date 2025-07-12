@@ -1,114 +1,27 @@
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: #f0f2f5; /* Lighter background */
-    font-size: 0.9rem; /* Smaller base font size */
-}
-
 .sidebar {
-    background-color: #fff;
-    border-right: 1px solid #e0e0e0; /* Lighter border */
-    height: 100vh;
     position: fixed;
     top: 0;
     left: 0;
-    width: 220px; /* Slightly narrower sidebar */
-    padding: 15px; /* Reduced padding */
-    box-shadow: 2px 0 5px rgba(0,0,0,0.02); /* Subtle shadow */
+    height: 100%;
+    width: 250px;
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-right: 1px solid #dee2e6;
+}
+
+.sidebar .nav-link.active {
+    outline: 1px solid grey;
 }
 
 .main-content {
-    margin-left: 220px; /* Adjust margin to match sidebar width */
+    margin-left: 250px;
     padding: 20px;
 }
 
-.nav-link {
-    color: #495057;
-    font-weight: 500;
-    padding: 8px 15px; /* Smaller padding for nav links */
-    font-size: 0.9rem;
-}
-
-.nav-link.active {
-    color: #0d6efd;
-    background-color: #e9ecef; /* Highlight active link */
+.checkbox-container {
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 10px;
     border-radius: 5px;
-}
-
-.card {
-    border: 1px solid #e0e0e0; /* Subtle border */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* More pronounced shadow */
-    border-radius: 8px; /* Rounded corners */
-    margin-bottom: 15px; /* Add some bottom margin */
-}
-
-.card-body {
-    padding: 15px; /* Reduced padding inside cards */
-}
-
-.card-title {
-    font-size: 1rem; /* Smaller card title */
-    font-weight: 600;
-    color: #343a40;
-}
-
-.card-text.fs-4 {
-    font-size: 1.5rem !important; /* Keep numbers prominent but slightly smaller */
-    font-weight: 700;
-}
-
-h2.text-center.text-success.mb-4 {
-    font-size: 1.8rem; /* Smaller main heading */
-    margin-bottom: 1.5rem !important;
-}
-
-.form-label {
-    font-size: 0.85rem; /* Smaller labels for forms */
-    font-weight: 500;
-    color: #495057 !important; /* Darker label color */
-}
-
-.form-control, .form-select {
-    font-size: 0.9rem; /* Smaller font in form inputs */
-    border-radius: 5px;
-    border-color: #ced4da;
-}
-
-.btn {
-    font-size: 0.9rem; /* Smaller button font */
-    padding: 8px 15px; /* Smaller button padding */
-    border-radius: 5px;
-}
-
-.table {
-    font-size: 0.85rem; /* Smaller font for table content */
-}
-
-.table th, .table td {
-    padding: 0.6rem; /* Smaller padding for table cells */
-}
-
-.table thead th {
-    font-weight: 600;
-    color: #495057;
-    border-bottom: 2px solid #e0e0e0;
-}
-
-/* Adjust chart container height */
-.chart-container {
-    height: 350px; /* Slightly reduced chart height */
-}
-
-.chart-container canvas {
-    max-height: 300px !important; /* Adjust canvas max height */
-}
-
-/* Specific adjustments for the no data notice */
-#noDataNotice p {
-    font-size: 1rem; /* Adjust font size for notice */
-    color: #6c757d;
-}
-
-/* Adjustments for action buttons */
-#actionButtons .btn {
-    margin-right: 10px; /* Spacing between buttons */
 }

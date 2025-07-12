@@ -5,6 +5,11 @@ import os
 
 app = Flask(__name__)
 DATABASE = 'expensetracker.db'
+ALLOWED_EXTENSIONS = {'xlsx', 'xls', 'csv'}
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def get_db():
     db = getattr(g, '_database', None)
@@ -58,11 +63,14 @@ def get_data():
 def upload():
     if request.method == 'POST':
         file = request.files.get('file')
-        if not file:
-            return jsonify({"error": "No file uploaded"}), 400
+        if not file or not allowed_file(file.filename):
+            return jsonify({"error": "Invalid file type"}), 400
 
         try:
-            df = pd.read_excel(file)
+            if file.filename.endswith('.csv'):
+                df = pd.read_csv(file)
+            else:
+                df = pd.read_excel(file)
 
             df = df.dropna(subset=["Completion Time"])
             df["Completion Time"] = pd.to_datetime(df["Completion Time"])
