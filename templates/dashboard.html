@@ -47,7 +47,82 @@
                 <p class="fs-5">📂 No data loaded. Please upload an Mpesa statement to view the dashboard.</p>
             </div>
 
-            <div class="row mb-4">
+            <!-- Filters -->
+            <div class="row g-3 mb-4 d-none" id="filterSection">
+                <div class="col-md-3">
+                    <label for="daterange" class="form-label">Date Range</label>
+                    <input id="daterange" type="text" placeholder="Select range" class="form-control border-success"/>
+                </div>
+                <div class="col-md-2">
+                    <label for="chartType" class="form-label">Chart Type</label>
+                    <select id="chartType" class="form-select border-success">
+                        <option value="line">📈 Line</option>
+                        <option value="bar">📊 Bar</option>
+                        <option value="pie">🥧 Pie</option>
+                        <option value="polarArea">🎯 Polar Area</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="aggregation" class="form-label">Aggregation</label>
+                    <select id="aggregation" class="form-select border-success">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="txnTypeDropdown" class="form-label">Transaction Type</label>
+                    <div class="btn-group w-100">
+                        <button id="btnAllTypes" class="btn btn-outline-success active">All</button>
+                        <button id="btnSelectTypes" class="btn btn-outline-success">Select</button>
+                    </div>
+                    <div id="categoryCheckboxes" class="mt-2 checkbox-container d-none">
+                        <!-- Checkboxes will be populated here -->
+                    </div>
+                </div>
+                <div class="col-md-auto d-flex align-items-end">
+                    <button onclick="loadChart()" class="btn btn-success">
+                        🚀 Apply
+                    </button>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2 mb-4 d-none" id="actionButtons">
+                <button onclick="showTypeBreakdown()" class="btn btn-warning">
+                    📊 Type Breakdown
+                </button>
+            </div>
+
+            <!-- Chart containers -->
+            <div class="row g-4" id="chartsWrapper">
+                <div id="lineChartContainer" class="col-12 chart-container">
+                    <h3 class="text-center text-success mb-3">Line Chart</h3>
+                    <canvas id="lineChart"></canvas>
+                </div>
+                <div id="barChartContainer" class="col-12 chart-container">
+                    <h3 class="text-center text-success mb-3">Bar Chart</h3>
+                    <canvas id="barChart"></canvas>
+                </div>
+                <div id="pieChartContainer" class="col-12 chart-container">
+                    <h3 class="text-center text-success mb-3">Pie Chart</h3>
+                    <canvas id="pieChart"></canvas>
+                </div>
+                <div id="polarAreaChartContainer" class="col-12 chart-container">
+                    <h3 class="text-center text-success mb-3">Polar Area Chart</h3>
+                    <canvas id="polarAreaChart"></canvas>
+                </div>
+                <div id="comparisonChartContainer" class="col-12 chart-container">
+                    <h3 class="text-center text-success mb-3">Comparison Chart</h3>
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+                <div id="typeBreakdownContainer" class="col-12 chart-container">
+                    <h3 class="text-center text-success mb-3">Transaction Type Breakdown</h3>
+                    <canvas id="typeBreakdownChart"></canvas>
+                </div>
+            </div>
+
+            <div class="row mb-4 mt-5">
                 <div class="col-md-4">
                     <div class="row g-2 mb-2">
                         <div class="col-md-6">
@@ -95,86 +170,6 @@
                             </table>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Filters -->
-            <div class="row g-3 mb-4 d-none" id="filterSection">
-                <div class="col-md-3">
-                    <label for="daterange" class="form-label">Date Range</label>
-                    <input id="daterange" type="text" placeholder="Select range" class="form-control border-success"/>
-                </div>
-                <div class="col-md-2">
-                    <label for="chartType" class="form-label">Chart Type</label>
-                    <select id="chartType" class="form-select border-success">
-                        <option value="line">📈 Line</option>
-                        <option value="bar">📊 Bar</option>
-                        <option value="pie">🥧 Pie</option>
-                        <option value="polarArea">🎯 Polar Area</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label for="aggregation" class="form-label">Aggregation</label>
-                    <select id="aggregation" class="form-select border-success">
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label for="txnTypeDropdown" class="form-label">Transaction Type</label>
-                    <select id="txnTypeDropdown" class="form-select border-success">
-                        <option value="all">All</option>
-                    </select>
-                    <div id="categoryCheckboxes" class="mt-2 checkbox-container">
-                        <!-- Checkboxes will be populated here -->
-                    </div>
-                </div>
-                <div class="col-md-1 d-flex align-items-end">
-                    <div class="form-check">
-                        <input type="checkbox" id="compareMode" class="form-check-input border-success">
-                        <label class="form-check-label" for="compareMode">Compare</label>
-                    </div>
-                </div>
-                <div class="col-md-1 d-flex align-items-end">
-                    <button onclick="loadChart()" class="btn btn-success w-100">
-                        🚀 Apply
-                    </button>
-                </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="d-flex gap-2 mb-4 d-none" id="actionButtons">
-                <button onclick="showTypeBreakdown()" class="btn btn-warning">
-                    📊 Type Breakdown
-                </button>
-            </div>
-
-            <!-- Chart containers -->
-            <div class="row g-4" id="chartsWrapper">
-                <div id="lineChartContainer" class="col-12 chart-container">
-                    <h3 class="text-center text-success mb-3">Line Chart</h3>
-                    <canvas id="lineChart"></canvas>
-                </div>
-                <div id="barChartContainer" class="col-12 chart-container">
-                    <h3 class="text-center text-success mb-3">Bar Chart</h3>
-                    <canvas id="barChart"></canvas>
-                </div>
-                <div id="pieChartContainer" class="col-12 chart-container">
-                    <h3 class="text-center text-success mb-3">Pie Chart</h3>
-                    <canvas id="pieChart"></canvas>
-                </div>
-                <div id="polarAreaChartContainer" class="col-12 chart-container">
-                    <h3 class="text-center text-success mb-3">Polar Area Chart</h3>
-                    <canvas id="polarAreaChart"></canvas>
-                </div>
-                <div id="comparisonChartContainer" class="col-12 chart-container">
-                    <h3 class="text-center text-success mb-3">Comparison Chart</h3>
-                    <canvas id="comparisonChart"></canvas>
-                </div>
-                <div id="typeBreakdownContainer" class="col-12 chart-container">
-                    <h3 class="text-center text-success mb-3">Transaction Type Breakdown</h3>
-                    <canvas id="typeBreakdownChart"></canvas>
                 </div>
             </div>
             
@@ -370,24 +365,37 @@
                     checkboxesContainer.appendChild(checkboxWrapper);
                 });
 
-                document.getElementById('txnTypeDropdown').addEventListener('change', function() {
-                    const allSelected = this.value === 'all';
-                    document.querySelectorAll('#categoryCheckboxes input[type="checkbox"]').forEach(cb => {
-                        cb.checked = allSelected;
-                    });
+                document.getElementById('btnSelectTypes').addEventListener('click', function() {
+                document.getElementById('categoryCheckboxes').classList.toggle('d-none');
+                this.classList.toggle('active');
+                document.getElementById('btnAllTypes').classList.remove('active');
+            });
+
+            document.getElementById('btnAllTypes').addEventListener('click', function() {
+                document.getElementById('categoryCheckboxes').classList.add('d-none');
+                this.classList.add('active');
+                document.getElementById('btnSelectTypes').classList.remove('active');
+                document.querySelectorAll('#categoryCheckboxes input[type="checkbox"]').forEach(cb => {
+                    cb.checked = true;
                 });
+            });
             }
 
             const dateRangeValue = document.getElementById("daterange").value;
             const [startDate, endDate] = dateRangeValue.includes(" to ") ? dateRangeValue.split(" to ") : [null, null];
             const aggregation = document.getElementById("aggregation").value;
             const chartType = document.getElementById("chartType").value;
-            const isCompare = document.getElementById("compareMode").checked;
+            const isCompare = document.getElementById('btnSelectTypes').classList.contains('active');
 
             const selectedTxnTypes = [];
-            document.querySelectorAll('#categoryCheckboxes input[type="checkbox"]:checked').forEach(cb => {
-                selectedTxnTypes.push(cb.value);
-            });
+            if (document.getElementById('btnAllTypes').classList.contains('active')) {
+                const uniqueTypes = [...new Set(rawData.types)].filter(t => t);
+                selectedTxnTypes.push(...uniqueTypes);
+            } else {
+                document.querySelectorAll('#categoryCheckboxes input[type="checkbox"]:checked').forEach(cb => {
+                    selectedTxnTypes.push(cb.value);
+                });
+            }
 
             // Filter data by date range first
             let filteredData = filterDataByDateRange(rawData, startDate, endDate);
