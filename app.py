@@ -79,25 +79,31 @@ def upload():
             df["Withdrawn"] = pd.to_numeric(df["Withdrawn"], errors="coerce").fillna(0).abs()
             df["Details"] = df["Details"].fillna("")
 
+            TRANSACTION_TYPE_MAP = {
+                "funds received from": "P2P",
+                "deposit of funds at agent till": "Deposit",
+                "merchant customer payment from": "Pay In",
+                "airtime purchase": "Airtime",
+                "customer transfer to": "Send Money",
+                "merchant payment to": "PayBill",
+                "pay bill to": "PayBill",
+                "m-shwari deposit": "M-Shwari Deposit",
+                "m-shwari loan": "M-Shwari Loan",
+                "m-shwari withdraw": "M-Shwari Withdraw",
+                "m-shwari lock": "M-Shwari Lock",
+                "customer transfer of funds charge": "Charges",
+                "withdrawal charge": "Charges",
+                "customer withdrawal at agent till": "Withdrawal",
+                "transfer from bank": "Bank Transfer",
+                "business payment from": "Business Payment",
+                "customer bundle purchase": "Data Bundles",
+            }
+
             def classify_type(detail):
                 d = detail.lower()
-                if "funds received from" in d: return "P2P"
-                if "deposit of funds at agent till" in d: return "Deposit"
-                if "merchant customer payment from" in d: return "Pay In"
-                if "airtime purchase" in d: return "Airtime"
-                if "customer transfer to" in d: return "Send Money"
-                if "merchant payment to" in d: return "PayBill"
-                if "pay bill to" in d: return "PayBill"
-                if "m-shwari deposit" in d: return "M-Shwari Deposit"
-                if "m-shwari loan" in d: return "M-Shwari Loan"
-                if "m-shwari withdraw" in d: return "M-Shwari Withdraw"
-                if "m-shwari lock" in d: return "M-Shwari Lock"
-                if "customer transfer of funds charge" in d: return "Charges"
-                if "withdrawal charge" in d: return "Charges"
-                if "customer withdrawal at agent till" in d: return "Withdrawal"
-                if "transfer from bank" in d: return "Bank Transfer"
-                if "business payment from" in d: return "Business Payment"
-                if "customer bundle purchase" in d: return "Data Bundles"
+                for keyword, trans_type in TRANSACTION_TYPE_MAP.items():
+                    if keyword in d:
+                        return trans_type
                 return "Other"
 
             df['transaction_type'] = df["Details"].apply(classify_type)

@@ -25,3 +25,18 @@
     padding: 10px;
     border-radius: 5px;
 }
+
+.chart-container { 
+    display: none; 
+    height: 400px;
+    position: relative;
+}
+.chart-container.active { 
+    display: block; 
+}
+.chart-container canvas {
+    max-height: 350px !important;
+}
+.form-label {
+    color: #198754;
+}
