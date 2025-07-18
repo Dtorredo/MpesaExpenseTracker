@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     const fileInput = document.getElementById('fileInput');
     const uploadStatus = document.getElementById('uploadStatus');
-    const processAndGoHomeBtn = document.getElementById('processAndGoHome');
     const uploadBox = document.querySelector('.upload-box');
 
     function handleFile(file) {
@@ -23,9 +22,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.error) {
                 uploadStatus.textContent = `Error: ${data.error}`;
             } else {
-                sessionStorage.setItem('mpesaData', JSON.stringify(data));
-                uploadStatus.textContent = '✅ Success! Data loaded.';
-                processAndGoHomeBtn.classList.remove('d-none');
+                uploadStatus.textContent = '✅ Success! Redirecting...';
+                window.location.href = '/';
             }
         })
         .catch(error => {
@@ -56,9 +54,5 @@ document.addEventListener('DOMContentLoaded', function () {
             fileInput.files = files;
             handleFile(files[0]);
         }
-    });
-
-    processAndGoHomeBtn.addEventListener('click', () => {
-        window.location.href = '/';
     });
 });
