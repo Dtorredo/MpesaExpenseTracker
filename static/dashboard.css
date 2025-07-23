@@ -26,6 +26,10 @@ body {
     color: #fff;
 }
 
+.text-muted {
+    color: #a9a9a9 !important;
+}
+
 .sidebar .nav-link.active {
     color: #fff;
     background-color: #6a0dad;

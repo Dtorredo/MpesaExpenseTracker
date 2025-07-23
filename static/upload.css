@@ -1,20 +1,6 @@
-.sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 250px;
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-right: 1px solid #dee2e6;
-}
-
 .main-content {
     margin-left: 250px;
     padding: 20px;
-}
-
-.main-content {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -22,39 +8,42 @@
 }
 
 .upload-container {
-  background-color: #fff;
+  background-color: #222;
   padding: 30px;
   border-radius: 15px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.1);
   text-align: center;
   width: 500px;
   max-width: 90%;
+  border: 1px solid #444;
 }
 
 .upload-container h2 {
   margin-bottom: 20px;
   font-size: 24px;
+  color: #f0f0f0;
 }
 
 .upload-box {
-  border: 3px dotted #bbb;
+  border: 3px dotted #555;
   padding: 40px 20px;
   border-radius: 10px;
   transition: border-color 0.3s;
 }
 
 .upload-box:hover {
-  border-color: #2563eb;
+  border-color: #6a0dad;
 }
 
 .upload-label {
   font-size: 18px;
   margin-bottom: 10px;
   font-weight: 500;
+  color: #a9a9a9;
 }
 
 .upload-support {
   font-size: 14px;
-  color: #6b7280;
+  color: #a9a9a9;
   margin-bottom: 20px;
 }
