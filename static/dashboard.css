@@ -1,29 +1,101 @@
+body {
+    background-color: #1a1a1a;
+    color: #f0f0f0;
+}
+
 .sidebar {
     position: fixed;
     top: 0;
     left: 0;
     height: 100%;
     width: 250px;
-    background-color: #f8f9fa;
+    background-color: #111;
     padding: 20px;
-    border-right: 1px solid #dee2e6;
+    border-right: 1px solid #333;
+}
+
+.sidebar h3 {
+    color: #f0f0f0;
+}
+
+.sidebar .nav-link {
+    color: #a9a9a9;
+}
+
+.sidebar .nav-link:hover {
+    color: #fff;
 }
 
 .sidebar .nav-link.active {
-    outline: 1px solid grey;
+    color: #fff;
+    background-color: #6a0dad;
+    border-radius: 5px;
 }
 
 .main-content {
     margin-left: 250px;
     padding: 20px;
+    background-color: #1a1a1a;
+}
+
+.text-success {
+    color: #6a0dad !important;
+}
+
+.form-control, .form-select {
+    background-color: #333;
+    color: #f0f0f0;
+    border-color: #555;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: #444;
+    color: #f0f0f0;
+    border-color: #6a0dad;
+    box-shadow: 0 0 0 0.25rem rgba(106, 13, 173, 0.25);
+}
+
+.btn-success {
+    background-color: #6a0dad;
+    border-color: #6a0dad;
+}
+
+.btn-success:hover {
+    background-color: #580a94;
+    border-color: #580a94;
+}
+
+.btn-outline-success {
+    color: #6a0dad;
+    border-color: #6a0dad;
+}
+
+.btn-outline-success:hover, .btn-outline-success.active {
+    color: #fff;
+    background-color: #6a0dad;
+    border-color: #6a0dad;
+}
+
+.card {
+    background-color: #222;
+    border: 1px solid #444;
+}
+
+.table {
+    color: #f0f0f0;
+}
+
+.table-sm > :not(caption) > * > * {
+    background-color: #222;
 }
 
 .checkbox-container {
     max-height: 150px;
     overflow-y: auto;
-    border: 1px solid #ccc;
+    border: 1px solid #555;
     padding: 10px;
     border-radius: 5px;
+    background-color: #333;
 }
 
 .chart-container { 
@@ -38,5 +110,5 @@
     max-height: 350px !important;
 }
 .form-label {
-    color: #198754;
+    color: #6a0dad;
 }
